@@ -1,4 +1,6 @@
-ModularwxApp
+ModularwxApp 
+
+This is a modified version of the project from https://github.com/T-Rex/wxModularApp to use the CMAKE-BASIS module
 
 ModularwxApp
 ============
