@@ -1,0 +1,27 @@
+#pragma once
+
+#if defined(__WXMSW__)
+#ifdef WXMAKINGDLL_GUIWINBASE
+#    define WXDLLIMPEXP_GUIWINBASE WXEXPORT
+#    define WXDLLIMPEXP_DATA_GUIWINBASE(type) WXEXPORT type
+#    if defined(HAVE_VISIBILITY)
+#        define WXDLLIMPEXP_INLINE_GUIWINBASE WXEXPORT
+#    else
+#        define WXDLLIMPEXP_INLINE_GUIWINBASE
+#    endif
+#elif defined(WXUSINGDLL_GUIWINBASE)
+#    define WXDLLIMPEXP_GUIWINBASE WXIMPORT
+#    define WXDLLIMPEXP_DATA_GUIWINBASE(type) WXIMPORT type
+#    if defined(HAVE_VISIBILITY)
+#        define WXDLLIMPEXP_INLINE_GUIWINBASE WXIMPORT
+#    else
+#        define WXDLLIMPEXP_INLINE_GUIWINBASE
+#    endif
+#else 
+#    define WXDLLIMPEXP_GUIWINBASE
+#    define WXDLLIMPEXP_DATA_GUIWINBASE(type) type
+#    define WXDLLIMPEXP_INLINE_GUIWINBASE
+#endif
+
+#endif // __WXMSW__
+

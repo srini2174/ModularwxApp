@@ -1,0 +1,148 @@
+##############################################################################
+# @file  CMakeLists.txt
+# @brief CMake configuration of bundle.
+#
+# Copyright (c) 2012 University of Pennsylvania. All rights reserved.
+# See http://www.cbica.upenn.edu/sbia/software/license.html or COPYING file.
+#
+# Contact: SBIA Group <sbia-software at uphs.upenn.edu>
+##############################################################################
+
+cmake_minimum_required (VERSION 2.8.4)
+
+include (ExternalProject)
+include (CMakeParseArguments)
+
+# ============================================================================
+# global settings
+# ============================================================================
+
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+
+if (NOT BUNDLE_PROJECTS)
+  set (BUNDLE_PROJECTS) # tells BASIS which other packages belong to the same build
+                        # each package which is build via ExternalProject_Add
+                        # shall be added to this list and passed on to CMake
+                        # for the configuration of any BASIS-based project
+                        # using -DBUNDLE_PROJECTS:INTERNAL=<names>.
+endif ()
+
+# ============================================================================
+# 1. BASIS
+# ============================================================================
+
+set (BUNDLE_DEPENDS) # either BASIS or nothing if BASIS already installed
+
+
+
+# ============================================================================
+# 2. other bundle packages
+# ============================================================================
+
+# this is by defaul done even when BASIS was found such that the build of the
+# remaining packages is always the same even if it would not be necessary to
+# have the external "bundle" project. this switch is also used by the "bundle"
+# project to skip the addition of this external project. otherwise, it would
+# be an endless recursion...
+option (BUNDLE_EXTERNAL_PROJECTS "Whether to bundle all external projects even if already installed BASIS is used." ON)
+mark_as_advanced (BUNDLE_EXTERNAL_PROJECTS)
+
+if (BUNDLE_EXTERNAL_PROJECTS)
+  # directory of the installed BASISConfig.cmake file
+  if (BUNDLE_DEPENDS MATCHES "(^|;)BASIS(;|$)")
+    if (BASIS_INSTALL_SCHEME MATCHES "win")
+      set (BASIS_DIR "${CMAKE_INSTALL_PREFIX}/CMake/BASIS")
+    else ()
+      set (BASIS_DIR "${CMAKE_INSTALL_PREFIX}/lib/cmake/${BUNDLE_NAME_L}")
+    endif ()
+  endif ()
+  # build all other packages as external project which itself just builds
+  # the following external projects. this is necessary as BASIS has to be
+  # build before the other external projects can be even configured.
+  # in particular the Find<Pkg>.cmake modules coming with BASIS are required
+  # to find any already installed packages
+  ExternalProject_Add (
+    bundle
+    DEPENDS          ${BUNDLE_DEPENDS}
+    DOWNLOAD_COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_CURRENT_LIST_FILE}" CMakeLists.txt
+    PREFIX           bundle
+    DOWNLOAD_DIR     bundle
+    SOURCE_DIR       bundle
+    BINARY_DIR       bundle
+    STAMP_DIR        bundle/tmp
+    TMP_DIR          bundle/tmp
+    CMAKE_CACHE_ARGS "-DBUNDLE_PROJECTS:STRING=${BUNDLE_PROJECTS}"
+                     "-DBUILD_DOCUMENTATION:BOOL=${BUILD_DOCUMENTATION}"
+                     "-DTEST_BEFORE_INSTALL:BOOL=${TEST_BEFORE_INSTALL}"
+                     "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
+                     "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}"
+                     "-DBASIS_DIR:PATH=${BASIS_DIR}"
+                     "-DBUNDLE_SOURCE_DIR:PATH=${BUNDLE_SOURCE_DIR}"
+                     "-DALL_BUNDLE_SOURCE_DIR:PATH=${ALL_BUNDLE_SOURCE_DIR}"
+                     "-DBUNDLE_EXTERNAL_PROJECTS:INTERNAL=OFF"
+    INSTALL_COMMAND  ""
+  )
+  # remove all bundle files on "make clean"
+  set_property (DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/bundle")
+  # do not continue... the external "bundle" project will do the rest
+  return ()
+endif ()
+
+set_directory_properties (PROPERTY EP_PREFIX "${CMAKE_CURRENT_BINARY_DIR}")
+
+
+
+set (ALL_BUNDLE_DEPENDS) # external projects which ALL_BUNDLE depends on
+                     # note that dependencies may already be installed
+
+# ----------------------------------------------------------------------------
+# PluginItf
+
+basis_find_package (PluginItf QUIET)
+
+if (NOT NiftiCLib_FOUND)
+  ExternalProject_Add (
+    PluginItf
+    CMAKE_ARGS       -Wno-dev # suppress missing cmake_minimum_required() warning
+    CMAKE_CACHE_ARGS "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
+                     "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}"
+  )
+  set (PluginItf_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+  list (APPEND BUNDLE_PROJECTS "PluginItf")
+  list (APPEND ALL_BUNDLE_DEPENDS  "PluginItf")
+endif ()
+
+# ----------------------------------------------------------------------------
+# Plugins
+
+basis_find_package (Plugins QUIET)
+
+if (NOT Plugins_FOUND)
+  ExternalProject_Add (
+    Plugins
+    CMAKE_CACHE_ARGS "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
+                     "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}"
+  )
+  set (Plugins_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+  list (APPEND BUNDLE_PROJECTS "Plugins")
+  list (APPEND ALL_BUNDLE_DEPENDS  "Plugins")
+endif ()
+
+# ----------------------------------------------------------------------------
+# ALL_BUNDLE
+ExternalProject_Add (
+  ALL_BUNDLE
+  DEPENDS             ${ALL_BUNDLE_DEPENDS}
+  SOURCE_DIR          "${ALL_BUNDLE_SOURCE_DIR}"
+  CMAKE_CACHE_ARGS    "-DBASIS_DIR:PATH=${BASIS_DIR}"
+                      "-DPluginItf_DIR:PATH=${PluginItf_DIR}"
+                      "-DPlugins_DIR:PATH=${Plugins_DIR}"
+                      "-DBUNDLE_NAME:INTERNAL=${BUNDLE_NAME}"
+                      "-DBUNDLE_PROJECTS:INTERNAL=${BUNDLE_PROJECTS}"
+                      "-DBASIS_ALL_DOC:BOOL=${BUILD_DOCUMENTATION}"
+                      "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
+                      "-DBUILD_DOCUMENTATION:BOOL=${BUILD_DOCUMENTATION}"
+                      "-DBUILD_TESTING:BOOL=${TEST_BEFORE_INSTALL}"
+                      "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}"
+  TEST_BEFORE_INSTALL ${TEST_BEFORE_INSTALL}
+)

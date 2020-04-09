@@ -1,0 +1,6 @@
+#include "windowBaseImpl/GuiCustomEvent.h"
+
+DEFINE_EVENT_TYPE(wxEVT_GUI_PLUGIN_INTEROP)
+//DEFINE_LOCAL_EVENT_TYPE(wxEVT_GUI_PLUGIN_INTEROP)
+//const wxEventType wxEVT_GUI_PLUGIN_INTEROP /*=wxEVT_USER_FIRST + 100; */= wxNewEventType();
+//wxDEFINE_EVENT(wxEVT_GUI_PLUGIN_INTEROP,GuiCustomEvent);
