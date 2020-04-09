@@ -82,8 +82,8 @@
 basis_project (
   # --------------------------------------------------------------------------
   # meta-data
-  NAME             "BASISTopLevelWS"
-  PACKAGE	   	     "BASISTopLevelWS"
+  NAME             "ModularwxAppWS"
+  PACKAGE	   	     "ModularwxAppWS"
   VERSION          "1.0.0"
   AUTHORS          "Srinivasan B"#<author>
   DESCRIPTION      "This is a top level project created based on MIRTK https://github.com/BioMedIA/MIRTK/blob/master/BasisProject.cmake"

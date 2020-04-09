@@ -83,7 +83,7 @@ basis_project (
   # --------------------------------------------------------------------------
   # meta-data
   SUBPROJECT       "PluginItf"
-  PACKAGE		       "BASISTopLevelWS"
+  PACKAGE		       "ModularwxAppWS"
   VERSION          "1.0.0"
   AUTHORS          #<author>
   DESCRIPTION      "This is a subproject for the top level project"

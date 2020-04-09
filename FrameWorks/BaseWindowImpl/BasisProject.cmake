@@ -83,7 +83,7 @@ basis_project (
   # --------------------------------------------------------------------------
   # meta-data
   SUBPROJECT       "BaseWinImpl"
-  PACKAGE		       "BASISTopLevelWS"
+  PACKAGE		       "ModularwxAppWS"
   VERSION          "1.0.0"
   AUTHORS          #<author>
   DESCRIPTION      "This subproject provides a default implementation for the GUI Window"
